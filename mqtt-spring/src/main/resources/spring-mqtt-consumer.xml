@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:int-mqtt="http://www.springframework.org/schema/integration/mqtt"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream-4.1.xsd
+		http://www.springframework.org/schema/integration/mqtt http://www.springframework.org/schema/integration/mqtt/spring-integration-mqtt-4.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-4.1.xsd">
+	
+	<context:component-scan base-package="com.casicloud.aop.mqtt"/>
+	
+	<context:property-placeholder location="classpath*:mqtt.properties" />
+	
+	<int:channel id="inputFromMQTT"/>
+	
+	<int-mqtt:message-driven-channel-adapter id="mqttInboundChannelAdapter"
+		client-id="${mqtt.default.client.id}.des"
+		url="${mqtt.url}"
+		topics="${mqtt.topics}"
+		qos="${mqtt.qos}"
+		auto-startup="true"
+		client-factory="defaultMqttPahoClientFactory"
+		send-timeout="${mqtt.timeout}" 
+		channel="inputFromMQTT" />
+	
+	<bean id="defaultMqttPahoClientFactory" class="org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory">
+		<!-- 
+		<property name="serverURIs" value=${mqtt.url}"></property>
+		<property name="userName" value="${mqtt.username}"/>
+		<property name="password" value="${mqtt.password}"/> 
+		-->
+	</bean>
+	<int:service-activator id="mqttServiceActivator" input-channel="inputFromMQTT" ref="mqttService" method="onMessage" />
+	<bean id="mqttService" class="com.casicloud.aop.mqtt.consumer.service.impl.SimpleMqttService" />
+</beans>
